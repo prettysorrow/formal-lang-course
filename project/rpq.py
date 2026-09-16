@@ -6,7 +6,7 @@ from typing import NamedTuple
 from pyformlang.finite_automaton import Epsilon
 
 
-class AutomatonData(NamedTuple):
+class AutomatonDescription(NamedTuple):
     """States of an automaton and the associated indices and start/final states."""
 
     states: list
@@ -15,13 +15,13 @@ class AutomatonData(NamedTuple):
     final_states: set
 
 
-def state_info(automaton) -> AutomatonData:
+def get_automaton_description(automaton) -> AutomatonDescription:
     """Extract states, state-to-index map, start and final states from an automaton."""
     states = sorted({state.value for state in automaton.states}, key=str)
     state_index = {state: index for index, state in enumerate(states)}
     start_states = {state.value for state in automaton.start_states}
     final_states = {state.value for state in automaton.final_states}
-    return AutomatonData(states, state_index, start_states, final_states)
+    return AutomatonDescription(states, state_index, start_states, final_states)
 
 
 def transitions_by_label(automaton, state_index):

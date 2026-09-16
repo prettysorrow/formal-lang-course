@@ -9,6 +9,7 @@ from pyformlang.finite_automaton import Epsilon
 class AutomatonDescription(NamedTuple):
     """States of an automaton and the associated indices and start/final states."""
 
+    automaton: object
     states: list
     state_index: dict
     start_states: set
@@ -23,13 +24,15 @@ def get_automaton_description(automaton) -> AutomatonDescription:
     start_states = {state.value for state in automaton.start_states}
     final_states = {state.value for state in automaton.final_states}
     return AutomatonDescription(
-        states, state_index, start_states, final_states, len(states)
+        automaton, states, state_index, start_states, final_states, len(states)
     )
 
 
-def transitions_by_label(automaton, state_index):
+def transitions_by_label(description: AutomatonDescription):
     """Group numeric transitions as ``{symbol: [(source, target), ...]}``."""
     edges_by_label = defaultdict(list)
+    automaton = description.automaton
+    state_index = description.state_index
     for from_state, transitions in automaton._transition_function._transitions.items():
         source = state_index[from_state.value]
         for symbol, to_states in transitions.items():

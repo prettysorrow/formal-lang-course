@@ -1,17 +1,27 @@
 """Shared helpers for regular path querying (tasks 3 and 4)."""
 
 from collections import defaultdict
+from typing import NamedTuple
 
 from pyformlang.finite_automaton import Epsilon
 
 
-def state_info(automaton):
+class AutomatonData(NamedTuple):
+    """States of an automaton and the associated indices and start/final states."""
+
+    states: list
+    state_index: dict
+    start_states: set
+    final_states: set
+
+
+def state_info(automaton) -> AutomatonData:
     """Extract states, state-to-index map, start and final states from an automaton."""
     states = sorted({state.value for state in automaton.states}, key=str)
     state_index = {state: index for index, state in enumerate(states)}
     start_states = {state.value for state in automaton.start_states}
     final_states = {state.value for state in automaton.final_states}
-    return states, state_index, start_states, final_states
+    return AutomatonData(states, state_index, start_states, final_states)
 
 
 def transitions_by_label(automaton, state_index):

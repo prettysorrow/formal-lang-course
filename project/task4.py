@@ -59,30 +59,20 @@ def ms_bfs_based_rpq(
 
     graph_info = state_info(graph_nfa)
     regex_info = state_info(regex_dfa)
-    graph_states = graph_info.states
-    graph_state_index = graph_info.state_index
-    graph_start_states = graph_info.start_states
-    graph_final_states = graph_info.final_states
-    regex_states = regex_info.states
-    regex_state_index = regex_info.state_index
-    regex_start_states = regex_info.start_states
-    regex_final_states = regex_info.final_states
-
-    regex_states_num = len(regex_states)
 
     product_adj = _build_product_adjacency(
-        transitions_by_label(graph_nfa, graph_state_index),
-        transitions_by_label(regex_dfa, regex_state_index),
-        len(graph_states),
-        regex_states_num,
+        transitions_by_label(graph_nfa, graph_info.state_index),
+        transitions_by_label(regex_dfa, regex_info.state_index),
+        len(graph_info.states),
+        len(regex_info.states),
     )
 
     reachability = _build_start_reachability(
-        graph_start_states,
-        regex_start_states,
-        graph_state_index,
-        regex_state_index,
-        regex_states_num,
+        graph_info.start_states,
+        regex_info.start_states,
+        graph_info.state_index,
+        regex_info.state_index,
+        len(regex_info.states),
     )
 
     while True:
@@ -94,12 +84,13 @@ def ms_bfs_based_rpq(
         reachability = next_reachability
 
     result = set()
-    for start_idx, graph_start_state in enumerate(graph_start_states):
-        for graph_final_state in graph_final_states:
-            for regex_final_state in regex_final_states:
+    for start_idx, graph_start_state in enumerate(graph_info.start_states):
+        for graph_final_state in graph_info.final_states:
+            for regex_final_state in regex_info.final_states:
                 final_idx = (
-                    graph_state_index[graph_final_state] * regex_states_num
-                    + regex_state_index[regex_final_state]
+                    graph_info.state_index[graph_final_state]
+                    * len(regex_info.states)
+                    + regex_info.state_index[regex_final_state]
                 )
                 if reachability[start_idx, final_idx]:
                     result.add((graph_start_state, graph_final_state))

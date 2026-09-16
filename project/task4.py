@@ -57,15 +57,16 @@ def ms_bfs_based_rpq(
     graph_nfa = graph_to_nfa(graph, start_nodes, final_nodes)
     regex_dfa = regex_to_dfa(regex)
 
-    (
-        graph_states,
-        graph_state_index,
-        graph_start_states,
-        graph_final_states,
-    ) = state_info(graph_nfa)
-    regex_states, regex_state_index, regex_start_states, regex_final_states = state_info(
-        regex_dfa
-    )
+    graph_info = state_info(graph_nfa)
+    regex_info = state_info(regex_dfa)
+    graph_states = graph_info.states
+    graph_state_index = graph_info.state_index
+    graph_start_states = graph_info.start_states
+    graph_final_states = graph_info.final_states
+    regex_states = regex_info.states
+    regex_state_index = regex_info.state_index
+    regex_start_states = regex_info.start_states
+    regex_final_states = regex_info.final_states
 
     regex_states_num = len(regex_states)
 

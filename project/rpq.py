@@ -13,6 +13,7 @@ class AutomatonDescription(NamedTuple):
     state_index: dict
     start_states: set
     final_states: set
+    num_states: int
 
 
 def get_automaton_description(automaton) -> AutomatonDescription:
@@ -21,7 +22,9 @@ def get_automaton_description(automaton) -> AutomatonDescription:
     state_index = {state: index for index, state in enumerate(states)}
     start_states = {state.value for state in automaton.start_states}
     final_states = {state.value for state in automaton.final_states}
-    return AutomatonDescription(states, state_index, start_states, final_states)
+    return AutomatonDescription(
+        states, state_index, start_states, final_states, len(states)
+    )
 
 
 def transitions_by_label(automaton, state_index):

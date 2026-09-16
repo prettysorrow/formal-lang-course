@@ -7,12 +7,11 @@ from project.rpq import get_automaton_description, transitions_by_label
 from project.task2 import graph_to_nfa, regex_to_dfa
 
 
-def _build_product_adjacency(
-    graph_edges_by_label,
-    regex_edges_by_label,
-    n_graph,
-    n_regex,
-):
+def _build_product_adjacency(graph_nfa, regex_dfa, graph_desc, regex_desc):
+    graph_edges_by_label = transitions_by_label(graph_nfa, graph_desc.state_index)
+    regex_edges_by_label = transitions_by_label(regex_dfa, regex_desc.state_index)
+    n_graph = graph_desc.num_states
+    n_regex = regex_desc.num_states
     product_size = n_graph * n_regex
     rows, cols = [], []
     for label in set(graph_edges_by_label) & set(regex_edges_by_label):
@@ -61,10 +60,7 @@ def ms_bfs_based_rpq(
     regex_desc = get_automaton_description(regex_dfa)
 
     product_adj = _build_product_adjacency(
-        transitions_by_label(graph_nfa, graph_desc.state_index),
-        transitions_by_label(regex_dfa, regex_desc.state_index),
-        len(graph_desc.states),
-        len(regex_desc.states),
+        graph_nfa, regex_dfa, graph_desc, regex_desc
     )
 
     reachability = _build_start_reachability(
@@ -72,7 +68,7 @@ def ms_bfs_based_rpq(
         regex_desc.start_states,
         graph_desc.state_index,
         regex_desc.state_index,
-        len(regex_desc.states),
+        regex_desc.num_states,
     )
 
     while True:
@@ -89,7 +85,7 @@ def ms_bfs_based_rpq(
             for regex_final_state in regex_desc.final_states:
                 final_idx = (
                     graph_desc.state_index[graph_final_state]
-                    * len(regex_desc.states)
+                    * regex_desc.num_states
                     + regex_desc.state_index[regex_final_state]
                 )
                 if reachability[start_idx, final_idx]:

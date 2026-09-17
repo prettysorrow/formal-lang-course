@@ -8,9 +8,6 @@ from pyformlang.cfg import CFG, Epsilon, Production, Terminal, Variable
 from project.rpq import get_automaton_description, transitions_by_label
 from project.task2 import graph_to_nfa
 
-class ShouldNotHappenException(Exception):
-    pass
-
 def cfg_to_weak_normal_form(cfg: CFG) -> CFG:
     cfg_normal_form = cfg.to_normal_form()
     cfg_start_symbol = cfg_normal_form.start_symbol
@@ -43,69 +40,73 @@ def hellings_based_cfpq(
             # X -> epsilon
             X = production.head
             epsilon_productions.add(X)
-        elif len(body) == 1 and isinstance(body[0], Terminal):
+        elif len(body) == 1:
             # X -> a
             X = production.head
             a = body[0].value
             terminal_productions[a].add(X)
-        elif len(body) == 2 and isinstance(body[0], Variable) and isinstance(body[1], Variable):
+        else:
             # X -> YZ
             X = production.head
             Y = body[0]
             Z = body[1]
             binary_productions.append((X, Y, Z))
-        else:
-            raise ShouldNotHappenException("unexpected production form")
 
-    fa = graph_to_nfa(graph, start_nodes, final_nodes)
-    fa_desc = get_automaton_description(fa)
-    start_indices = {
+    fa_desc = get_automaton_description(graph_to_nfa(graph, start_nodes, final_nodes))
+    indices_of_start_states = {
         fa_desc.state_index[node] for node in fa_desc.start_states
     }
-    final_indices = {
+    indices_of_final_states = {
         fa_desc.state_index[node] for node in fa_desc.final_states
     }
 
-    derivations = set()
-    by_left = defaultdict(set)
-    by_right = defaultdict(set)
+    # "derivation" (X, u, v) means: X derives the word on some path (u -> v)
+    derived = set()       # { (X, u, v) | (X, u, v) is derived }
+    frontier = set()      # derivations not yet used for the closure
+    by_left = defaultdict(set)   # (X, u) -> { v | (X, u, v) is derived }
+    by_right = defaultdict(set)  # (X, v) -> { u | (X, u, v) is derived }
 
-    def add_derivation(variable, left, right):
-        if (variable, left, right) in derivations:
-            return False
-        derivations.add((variable, left, right))
-        by_left[(variable, left)].add(right)
-        by_right[(variable, right)].add(left)
-        return True
+    def add_derivation(X, u, v):
+        if (X, u, v) in derived:
+            return
+        derived.add((X, u, v))
+        frontier.add((X, u, v))
+        by_left[(X, u)].add(v)
+        by_right[(X, v)].add(u)
 
-    for label, edges in transitions_by_label(fa_desc).items():
-        for head in terminal_productions.get(label, ()):
-            for left, right in edges:
-                add_derivation(head, left, right)
+    # (X -> a) and (u -a-> v)  ===>  (X, u, v)
+    for a, edges in transitions_by_label(fa_desc).items():
+        for X in terminal_productions.get(a, ()):
+            for u, v in edges:
+                add_derivation(X, u, v)
 
-    for node in range(fa_desc.num_states):
-        for head in epsilon_productions:
-            add_derivation(head, node, node)
+    # (X -> epsilon)  ===> (X, v, v) for all v
+    for v in range(fa_desc.num_states):
+        for X in epsilon_productions:
+            add_derivation(X, v, v)
 
-    new_derivations = set(derivations)
-    while new_derivations:
-        current = new_derivations
-        new_derivations = set()
-        for head, first, second in binary_productions:
-            for variable, nt_left, nt_right in current:
-                if variable == first:
-                    for right in by_left[(second, nt_right)]:
-                        if add_derivation(head, nt_left, right):
-                            new_derivations.add((head, nt_left, right))
-                if variable == second:
-                    for left in by_right[(first, nt_left)]:
-                        if add_derivation(head, left, nt_right):
-                            new_derivations.add((head, left, nt_right))
+    # 1. (X -> Y Z) and (Y, u, v) and (Z, v, w)  ===>  (X, u, w)
+    # 2. (X -> Y Z) and (Z, u, v) and (Y, w, u)  ===>  (X, w, v)
+    while frontier:
+        current = list(frontier)
+        frontier.clear()
+        for X, Y, Z in binary_productions:  # X -> Y Z
+            for head, u, v in current:
+                # 1.
+                if head == Y:  # for (Y, u, v)
+                    for w in by_left[(Z, v)]:  # every (Z, v, w)
+                        add_derivation(X, u, w)  # maps to (X, u, w)
+                # 2.
+                if head == Z:  # for (Z, u, v)
+                    for w in by_right[(Y, u)]:  # every (Y, w, u)
+                        add_derivation(X, w, v)  # maps to (X, w, v)    
 
+
+    # (S, u, v) where (S is start symbol) and (u is start state) and (v is final state)  ==>  (u, v)
     return {
-        (fa_desc.states[left], fa_desc.states[right])
-        for variable, left, right in derivations
-        if variable == normalized_cfg.start_symbol
-        and left in start_indices
-        and right in final_indices
+        (fa_desc.states[u], fa_desc.states[v])
+        for S, u, v in derived
+        if S == normalized_cfg.start_symbol
+        and u in indices_of_start_states
+        and v in indices_of_final_states
     }

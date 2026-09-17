@@ -40,7 +40,10 @@ def _build_start_reachability(graph_desc, regex_desc):
     rows, cols = zip(*starts) if starts else ([], [])
     return csr_matrix(
         ([True] * len(rows), (rows, cols)),
-        shape=(len(graph_desc.start_states), len(graph_desc.state_index) * regex_desc.num_states),
+        shape=(
+            len(graph_desc.start_states),
+            len(graph_desc.state_index) * regex_desc.num_states,
+        ),
         dtype=bool,
     )
 
@@ -51,7 +54,9 @@ def ms_bfs_based_rpq(
     start_nodes: set[int],
     final_nodes: set[int],
 ) -> set[tuple[int, int]]:
-    graph_desc = get_automaton_description(graph_to_nfa(graph, start_nodes, final_nodes))
+    graph_desc = get_automaton_description(
+        graph_to_nfa(graph, start_nodes, final_nodes)
+    )
     regex_desc = get_automaton_description(regex_to_dfa(regex))
 
     product_adj = _build_product_adjacency(graph_desc, regex_desc)

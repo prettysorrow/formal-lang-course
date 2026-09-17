@@ -3,10 +3,11 @@
 from collections import defaultdict
 
 from networkx import MultiDiGraph
-from pyformlang.cfg import CFG, Epsilon, Production, Terminal, Variable
+from pyformlang.cfg import CFG, Epsilon, Production, Variable
 
 from project.rpq import get_automaton_description, transitions_by_label
 from project.task2 import graph_to_nfa
+
 
 def cfg_to_weak_normal_form(cfg: CFG) -> CFG:
     cfg_normal_form = cfg.to_normal_form()
@@ -21,6 +22,7 @@ def cfg_to_weak_normal_form(cfg: CFG) -> CFG:
         productions=cfg_productions,
     )
 
+
 def hellings_based_cfpq(
     cfg: CFG,
     graph: MultiDiGraph,
@@ -30,9 +32,11 @@ def hellings_based_cfpq(
     """Solve the context-free reachability problem with Hellings' algorithm."""
     normalized_cfg = cfg_to_weak_normal_form(cfg)
 
-    terminal_productions = defaultdict(set)  # maps `a` to the set of `X` such that `X -> a` is a rule
-    epsilon_productions = set()              # set of `X` such that `X -> epsilon` is a rule
-    binary_productions = []                  # list of rules of the form `X -> YZ`
+    terminal_productions = defaultdict(
+        set
+    )  # maps `a` to the set of `X` such that `X -> a` is a rule
+    epsilon_productions = set()  # set of `X` such that `X -> epsilon` is a rule
+    binary_productions = []  # list of rules of the form `X -> YZ`
 
     for production in normalized_cfg.productions:
         body = production.body
@@ -61,9 +65,9 @@ def hellings_based_cfpq(
     }
 
     # "derivation" (X, u, v) means: X derives the word on some path (u -> v)
-    derived = set()       # { (X, u, v) | (X, u, v) is derived }
-    frontier = set()      # derivations not yet used for the closure
-    by_left = defaultdict(set)   # (X, u) -> { v | (X, u, v) is derived }
+    derived = set()  # { (X, u, v) | (X, u, v) is derived }
+    frontier = set()  # derivations not yet used for the closure
+    by_left = defaultdict(set)  # (X, u) -> { v | (X, u, v) is derived }
     by_right = defaultdict(set)  # (X, v) -> { u | (X, u, v) is derived }
 
     def add_derivation(X, u, v):
@@ -99,8 +103,7 @@ def hellings_based_cfpq(
                 # 2.
                 if head == Z:  # for (Z, u, v)
                     for w in by_right[(Y, u)]:  # every (Y, w, u)
-                        add_derivation(X, w, v)  # maps to (X, w, v)    
-
+                        add_derivation(X, w, v)  # maps to (X, w, v)
 
     # (S, u, v) where (S is start symbol) and (u is start state) and (v is final state)  ==>  (u, v)
     return {

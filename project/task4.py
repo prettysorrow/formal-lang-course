@@ -17,12 +17,8 @@ def _build_product_adjacency(graph_desc, regex_desc):
     product_size = graph_desc.num_states * regex_desc.num_states
     product_matrices = [
         kron(
-            build_transition_matrix(
-                graph_transitions_by_label[label], graph_desc.num_states
-            ),
-            build_transition_matrix(
-                regex_transitions_by_label[label], regex_desc.num_states
-            ),
+            build_transition_matrix(graph_desc, label),
+            build_transition_matrix(regex_desc, label),
         )
         for label in set(graph_transitions_by_label) & set(regex_transitions_by_label)
     ]
@@ -31,22 +27,20 @@ def _build_product_adjacency(graph_desc, regex_desc):
     return sum(product_matrices[1:], start=product_matrices[0])
 
 
-def _build_start_reachability(
-    graph_start_states,
-    regex_start_states,
-    graph_state_index,
-    regex_state_index,
-    n_regex,
-):
+def _build_start_reachability(graph_desc, regex_desc):
     starts = [
-        (i, graph_state_index[graph_start_state] * n_regex + regex_state_index[regex_start])
-        for i, graph_start_state in enumerate(graph_start_states)
-        for regex_start in regex_start_states
+        (
+            i,
+            graph_desc.state_index[graph_start_state] * regex_desc.num_states
+            + regex_desc.state_index[regex_start],
+        )
+        for i, graph_start_state in enumerate(graph_desc.start_states)
+        for regex_start in regex_desc.start_states
     ]
     rows, cols = zip(*starts) if starts else ([], [])
     return csr_matrix(
         ([True] * len(rows), (rows, cols)),
-        shape=(len(graph_start_states), len(graph_state_index) * n_regex),
+        shape=(len(graph_desc.start_states), len(graph_desc.state_index) * regex_desc.num_states),
         dtype=bool,
     )
 
@@ -62,13 +56,7 @@ def ms_bfs_based_rpq(
 
     product_adj = _build_product_adjacency(graph_desc, regex_desc)
 
-    reachability = _build_start_reachability(
-        graph_desc.start_states,
-        regex_desc.start_states,
-        graph_desc.state_index,
-        regex_desc.state_index,
-        regex_desc.num_states,
-    )
+    reachability = _build_start_reachability(graph_desc, regex_desc)
 
     while True:
         next_reachability = reachability.maximum(reachability @ product_adj)

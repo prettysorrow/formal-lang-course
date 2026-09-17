@@ -47,8 +47,20 @@ def transitions_by_label(description: AutomatonDescription):
     return edges_by_label
 
 
-def build_transition_matrix(edges, num_states):
-    """Build a boolean ``csr_matrix`` from ``(source, target)`` edges."""
+def build_transition_matrix(
+    description: AutomatonDescription, symbol: str | None = None
+):
+    """Build a boolean ``csr_matrix`` for the automaton's transitions.
+
+    ``symbol`` optionally restricts the matrix to the edges with that label.
+    """
+    edges = [
+        edge
+        for label, label_edges in transitions_by_label(description).items()
+        if symbol is None or label == symbol
+        for edge in label_edges
+    ]
+    num_states = description.num_states
     if not edges:
         return csr_matrix((num_states, num_states), dtype=bool)
     rows = [source for source, _ in edges]

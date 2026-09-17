@@ -4,6 +4,7 @@ from collections import defaultdict
 from typing import NamedTuple
 
 from pyformlang.finite_automaton import Epsilon
+from scipy.sparse import csr_matrix
 
 
 class AutomatonDescription(NamedTuple):
@@ -44,3 +45,16 @@ def transitions_by_label(description: AutomatonDescription):
                 target = state_index[to_state.value]
                 edges_by_label[str(symbol)].append((source, target))
     return edges_by_label
+
+
+def build_transition_matrix(edges, num_states):
+    """Build a boolean ``csr_matrix`` from ``(source, target)`` edges."""
+    if not edges:
+        return csr_matrix((num_states, num_states), dtype=bool)
+    rows = [source for source, _ in edges]
+    cols = [target for _, target in edges]
+    return csr_matrix(
+        ([True] * len(edges), (rows, cols)),
+        shape=(num_states, num_states),
+        dtype=bool,
+    )

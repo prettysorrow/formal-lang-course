@@ -241,25 +241,27 @@ def test_edges_to_graph_with_empty_edges_is_empty():
     assert graph.number_of_edges() == 0
 
 
-def test_edges_to_graph_with_edge_is_not_empty():
-    graph = edges_to_graph([(1, "a", 2)])
+def test_edges_to_graph_check_nodes_and_edges():
+    graph = edges_to_graph([(1, "a", 2), (2, "b", 3), (3, "c", 4)])
 
-    assert graph.number_of_nodes() == 2
-    assert graph.number_of_edges() == 1
+    assert graph.number_of_nodes() == 4
+    assert graph.number_of_edges() == 3
     assert graph.has_edge(1, 2)
+    assert graph.has_edge(2, 3)
+    assert graph.has_edge(3, 4)
 
 
-def test_edges_to_graph_keeps_parallel_edges():
+def test_edges_to_graph_check_labels():
+    graph = edges_to_graph([(1, "d", 2), (2, "e", 3)])
+
+    assert graph.get_edge_data(1, 2, 0)["label"] == "d"
+    assert graph.get_edge_data(2, 3, 0)["label"] == "e"
+
+
+def test_edges_to_graph_parallel_edges():
     graph = edges_to_graph([(1, "a", 2), (1, "b", 2)])
 
     assert graph.number_of_edges(1, 2) == 2
-
-
-def test_edges_to_graph_adds_edges_with_labels():
-    graph = edges_to_graph([(1, "a", 2), (2, "b", 3)])
-
-    assert graph.get_edge_data(1, 2, 0)["label"] == "a"
-    assert graph.get_edge_data(2, 3, 0)["label"] == "b"
 
 
 # negative tests for edges_to_graph

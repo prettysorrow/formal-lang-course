@@ -61,8 +61,8 @@ def graph_to_nfa(
 
 
 def edges_to_graph(
-    edges: Iterable[tuple[Any, Any, str]],
-) -> networkx.MultiDiGraph:
+    edges: Iterable[tuple[Any, str, Any]],
+) -> MultiDiGraph:
     """Build a ``MultiDiGraph`` from labeled edges.
 
     Args:

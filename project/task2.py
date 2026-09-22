@@ -49,13 +49,11 @@ def graph_to_nfa(
     """
     start_states = start_states or set(graph.nodes)
     final_states = final_states or set(graph.nodes)
-
     nfa = NondeterministicFiniteAutomaton()
-    for node in graph.nodes:
-        if node in start_states:
-            nfa.add_start_state(node)
-        if node in final_states:
-            nfa.add_final_state(node)
+    for state in start_states:
+        nfa.add_start_state(state)
+    for state in final_states:
+        nfa.add_final_state(state)
     for source, target, weight in graph.edges(data=True):
         symbol_by = Symbol(weight["label"])
         nfa.add_transition(source, symbol_by, target)

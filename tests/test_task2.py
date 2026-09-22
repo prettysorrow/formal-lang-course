@@ -92,14 +92,19 @@ def test_regex_to_dfa_alternation_and_star_and_concatenation_and_epsilon():
 # negative tests for regex_to_dfa
 
 
-def test_regex_to_dfa_unbalanced_parenthesis_raises():
-    with pytest.raises(MisformedRegexError):
-        regex_to_dfa("a(")
-
-
 def test_regex_to_dfa_star_without_operand_raises():
     with pytest.raises(MisformedRegexError):
         regex_to_dfa("*a")
+
+
+def test_regex_to_dfa_star_with_invalid_operand_raises():
+    with pytest.raises(MisformedRegexError):
+        regex_to_dfa("|*abcde")
+
+
+def test_regex_to_dfa_empty_parentheses_raises():
+    with pytest.raises(Exception):
+        regex_to_dfa("()")
 
 
 def test_regex_to_dfa_unclosed_parenthesis_raises():
@@ -107,9 +112,9 @@ def test_regex_to_dfa_unclosed_parenthesis_raises():
         regex_to_dfa("(a|b")
 
 
-def test_regex_to_dfa_empty_parenthesis_raises():
-    with pytest.raises(Exception):
-        regex_to_dfa("()")
+def test_regex_to_dfa_unbalanced_parentheses_raises():
+    with pytest.raises(MisformedRegexError):
+        regex_to_dfa("a(b(c)d)e)f")
 
 
 # positive tests for graph_to_nfa

@@ -4,7 +4,6 @@ from collections.abc import Iterable
 from typing import Any
 
 from networkx import MultiDiGraph
-import networkx
 from pyformlang.finite_automaton import (
     DeterministicFiniteAutomaton,
     NondeterministicFiniteAutomaton,
@@ -76,7 +75,7 @@ def edges_to_graph(
     Returns:
         A directed multigraph whose edges are the ones given in ``edges``.
     """
-    graph = networkx.MultiDiGraph()
+    graph = MultiDiGraph()
     for source, label, target in edges:
         graph.add_edge(source, target, label=label)
     return graph

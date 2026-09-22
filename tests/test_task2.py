@@ -184,7 +184,7 @@ def test_graph_to_nfa_accepts_empty_word_from_self_loop_state():
 # negative tests for graph_to_nfa
 
 
-def test_graph_to_nfa_rejects_non_graph():
+def test_graph_to_nfa_none_as_graph_raises():
     with pytest.raises(AttributeError):
         graph_to_nfa(None, set(), set())
 
@@ -265,11 +265,11 @@ def test_edges_to_graph_adds_edges_with_labels():
 # negative tests for edges_to_graph
 
 
-def test_edges_to_graph_rejects_non_iterable_edges():
+def test_edges_to_graph_none_as_edges_raises():
     with pytest.raises(TypeError):
         edges_to_graph(None)
 
 
-def test_edges_to_graph_rejects_edge_with_wrong_arity():
+def test_edges_to_graph_edge_without_label_raises():
     with pytest.raises(ValueError):
         edges_to_graph([(1, 2)])

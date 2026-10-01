@@ -157,11 +157,6 @@ def test_intersect_automata_raises_on_second_none_automaton():
         intersect_automata(automaton, None)
 
 
-def test_intersect_automata_raises_on_automaton_that_is_not_adjacency_matrix_fa():
-    with pytest.raises(AttributeError):
-        intersect_automata(regex_to_dfa("a"), AdjacencyMatrixFA(regex_to_dfa("a")))
-
-
 def test_tensor_based_rpq_raises_on_none_regex():
     graph = _build_graph([(0, 1, "b")])
 

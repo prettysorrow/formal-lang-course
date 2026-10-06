@@ -108,6 +108,30 @@ def test_tensor_based_rpq_concat_and_alt_and_star():
     assert answer == {(0, 0), (0, 1), (0, 2)}
 
 
+def test_tensor_based_rpq_empty_start():
+    graph = _build_graph([(0, 1, "a"), (1, 2, "b"), (2, 0, "a")])
+
+    assert tensor_based_rpq("a b", graph, set(), {2}) == tensor_based_rpq(
+        "a b", graph, set(graph.nodes), {2}
+    )
+
+
+def test_tensor_based_rpq_empty_final():
+    graph = _build_graph([(0, 1, "a"), (1, 2, "b"), (2, 0, "a")])
+
+    assert tensor_based_rpq("a b", graph, {0}, set()) == tensor_based_rpq(
+        "a b", graph, {0}, set(graph.nodes)
+    )
+
+
+def test_tensor_based_rpq_empty_start_and_final():
+    graph = _build_graph([(0, 1, "a"), (1, 2, "b"), (2, 0, "a")])
+
+    assert tensor_based_rpq("a b", graph, set(), set()) == tensor_based_rpq(
+        "a b", graph, set(graph.nodes), set(graph.nodes)
+    )
+
+
 # type assertions
 
 

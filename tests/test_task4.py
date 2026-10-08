@@ -21,6 +21,7 @@ _cycle_edges = [(0, 1, "x"), (1, 2, "y"), (2, 3, "x"), (3, 0, "y"), (1, 3, "y")]
 
 _branch_edges = [(0, 1, "x"), (1, 2, "y"), (2, 1, "x"), (1, 3, "y")]
 
+
 # positive tests
 @pytest.mark.parametrize(
     "edges, regex, start, final",

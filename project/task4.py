@@ -1,11 +1,10 @@
 """Task 4. Regular path queries for multiple start vertices."""
 
 from networkx import MultiDiGraph
-import numpy
 from scipy import sparse
 
-from project.task3 import AdjacencyMatrixFA, intersect_automata
 from project.task2 import graph_to_nfa, regex_to_dfa
+from project.task3 import AdjacencyMatrixFA
 
 
 def ms_bfs_based_rpq(
@@ -16,47 +15,85 @@ def ms_bfs_based_rpq(
 ) -> set[tuple[int, int]]:
     graph_fa = AdjacencyMatrixFA(graph_to_nfa(graph, start_nodes, final_nodes))
     regex_fa = AdjacencyMatrixFA(regex_to_dfa(regex))
-    intersection = intersect_automata(graph_fa, regex_fa)
-    regex_size = regex_fa.states_count
 
     graph_starts = sorted(graph_fa.start_indices)
-    reachability_matrix = _build_reachability_matrix(
-        graph_starts, regex_fa, intersection
-    )
+    regex_transitions = _build_regex_transitions(graph_fa, regex_fa)
 
-    final_indices = sorted(intersection.final_indices)
-    final_states = [graph_fa.states[index // regex_size] for index in final_indices]
-    rows, columns = reachability_matrix[:, final_indices].nonzero()
+    front_shape = (regex_fa.states_count, graph_fa.states_count)
+    fronts = _build_initial_fronts(graph_starts, regex_fa, front_shape)
+    visited = [front.copy() for front in fronts]
 
+    while any(front.nnz for front in fronts):
+        for idx, front in enumerate(fronts):
+            if not front.nnz:
+                continue
+            fronts[idx] = _build_next_front(
+                front,
+                visited[idx],
+                graph_fa,
+                regex_transitions,
+                front_shape,
+            )
+            visited[idx] += fronts[idx]
+
+    return _collect_reachable_pairs(visited, graph_fa, regex_fa, graph_starts)
+
+
+def _build_regex_transitions(
+    graph_fa: AdjacencyMatrixFA,
+    regex_fa: AdjacencyMatrixFA,
+) -> dict[str, sparse.csr_array]:
+    symbols = set(graph_fa.transition_matrices) & set(regex_fa.transition_matrices)
     return {
-        (graph_fa.states[graph_starts[row]], final_states[column])
-        for row, column in zip(rows, columns)
+        symbol: regex_fa.transition_matrices[symbol].transpose().tocsr()
+        for symbol in symbols
     }
 
 
-def _build_reachability_matrix(
+def _build_initial_fronts(
     graph_starts: list[int],
     regex_fa: AdjacencyMatrixFA,
-    intersection: AdjacencyMatrixFA,
-) -> sparse.csr_array:
-    regex_size = regex_fa.states_count
-    regex_starts = sorted(regex_fa.start_indices)
-
-    columns = [
-        graph_start * regex_size + regex_start
+    front_shape: tuple[int, int],
+) -> list[sparse.csr_array]:
+    (regex_start,) = regex_fa.start_indices
+    return [
+        sparse.csr_array(
+            ([True], ([regex_start], [graph_start])),
+            shape=front_shape,
+            dtype=bool,
+        )
         for graph_start in graph_starts
-        for regex_start in regex_starts
     ]
-    rows = numpy.repeat(numpy.arange(len(graph_starts)), len(regex_starts))
-    reach = sparse.csr_array(
-        (numpy.ones(len(columns), dtype=bool), (rows, columns)),
-        shape=(len(graph_starts), intersection.states_count),
-    )
 
-    adjacency = intersection.reflexive_adjacency_matrix()
-    while True:
-        new_reach = (reach @ adjacency) > reach
-        if new_reach.nnz == 0:
-            break
-        reach += new_reach
-    return reach
+
+def _build_next_front(
+    front: sparse.csr_array,
+    visited: sparse.csr_array,
+    graph_fa: AdjacencyMatrixFA,
+    regex_transitions: dict[str, sparse.csr_array],
+    front_shape: tuple[int, int],
+) -> sparse.csr_array:
+    reached = sparse.csr_array(front_shape, dtype=bool)
+    for symbol, regex_transition in regex_transitions.items():
+        reached += regex_transition @ front @ graph_fa.transition_matrices[symbol]
+    return reached > visited
+
+
+def _collect_reachable_pairs(
+    visited: list[sparse.csr_array],
+    graph_fa: AdjacencyMatrixFA,
+    regex_fa: AdjacencyMatrixFA,
+    graph_starts: list[int],
+) -> set[tuple[int, int]]:
+    result = set()
+    for graph_start, visited_front in zip(graph_starts, visited):
+        rows, cols = visited_front.nonzero()
+        for regex_state, graph_state in zip(rows, cols):
+            if regex_state not in regex_fa.final_indices:
+                continue
+            if graph_state not in graph_fa.final_indices:
+                continue
+            start_vertex = graph_fa.states[graph_start]
+            final_vertex = graph_fa.states[graph_state]
+            result.add((start_vertex, final_vertex))
+    return result

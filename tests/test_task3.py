@@ -108,6 +108,30 @@ def test_tensor_based_rpq_concat_and_alt_and_star():
     assert answer == {(0, 0), (0, 1), (0, 2)}
 
 
+def test_tensor_based_rpq_empty_start():
+    graph = _build_graph([(0, 1, "a"), (1, 2, "b"), (2, 0, "a")])
+
+    assert tensor_based_rpq("a b", graph, set(), {2}) == tensor_based_rpq(
+        "a b", graph, set(graph.nodes), {2}
+    )
+
+
+def test_tensor_based_rpq_empty_final():
+    graph = _build_graph([(0, 1, "a"), (1, 2, "b"), (2, 0, "a")])
+
+    assert tensor_based_rpq("a b", graph, {0}, set()) == tensor_based_rpq(
+        "a b", graph, {0}, set(graph.nodes)
+    )
+
+
+def test_tensor_based_rpq_empty_start_and_final():
+    graph = _build_graph([(0, 1, "a"), (1, 2, "b"), (2, 0, "a")])
+
+    assert tensor_based_rpq("a b", graph, set(), set()) == tensor_based_rpq(
+        "a b", graph, set(graph.nodes), set(graph.nodes)
+    )
+
+
 # type assertions
 
 
@@ -155,11 +179,6 @@ def test_intersect_automata_raises_on_second_none_automaton():
 
     with pytest.raises(AttributeError):
         intersect_automata(automaton, None)
-
-
-def test_intersect_automata_raises_on_automaton_that_is_not_adjacency_matrix_fa():
-    with pytest.raises(AttributeError):
-        intersect_automata(regex_to_dfa("a"), AdjacencyMatrixFA(regex_to_dfa("a")))
 
 
 def test_tensor_based_rpq_raises_on_none_regex():

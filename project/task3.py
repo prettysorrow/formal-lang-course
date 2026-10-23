@@ -121,8 +121,6 @@ def tensor_based_rpq(
     start_nodes: set[int],
     final_nodes: set[int],
 ) -> set[tuple[int, int]]:
-    if not start_nodes or not final_nodes:
-        return set()
     graph_fa = AdjacencyMatrixFA(graph_to_nfa(graph, start_nodes, final_nodes))
     regex_fa = AdjacencyMatrixFA(regex_to_dfa(regex))
     intersection = intersect_automata(graph_fa, regex_fa)

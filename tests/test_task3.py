@@ -1,21 +1,11 @@
 """Tests for task 3."""
 
-import networkx
 import pytest
 from pyformlang.regular_expression import MisformedRegexError
 
+from helpers import build_graph
 from project.task2 import regex_to_dfa
 from project.task3 import AdjacencyMatrixFA, intersect_automata, tensor_based_rpq
-
-# testing utilities
-
-
-def _build_graph(edges) -> networkx.MultiDiGraph:
-    graph = networkx.MultiDiGraph()
-    for source, target, label in edges:
-        graph.add_edge(source, target, label=label)
-    return graph
-
 
 # tests for accepts
 
@@ -82,7 +72,7 @@ def test_intersect_automata_star():
 
 
 def test_tensor_based_rpq_concat():
-    graph = _build_graph(
+    graph = build_graph(
         [(0, 1, "a"), (0, 2, "a"), (1, 3, "b"), (2, 4, "c"), (3, 0, "a"), (4, 0, "a")]
     )
     answer = tensor_based_rpq("a b", graph, {0}, {0, 1, 2, 3, 4})
@@ -91,7 +81,7 @@ def test_tensor_based_rpq_concat():
 
 
 def test_tensor_based_rpq_concat_and_alt():
-    graph = _build_graph(
+    graph = build_graph(
         [(0, 1, "a"), (0, 2, "a"), (1, 3, "b"), (2, 4, "c"), (3, 0, "a"), (4, 0, "a")]
     )
     answer = tensor_based_rpq("a (b | c)", graph, {0}, {0, 1, 2, 3, 4})
@@ -100,7 +90,7 @@ def test_tensor_based_rpq_concat_and_alt():
 
 
 def test_tensor_based_rpq_concat_and_alt_and_star():
-    graph = _build_graph(
+    graph = build_graph(
         [(0, 1, "a"), (0, 2, "a"), (1, 3, "b"), (2, 4, "c"), (3, 0, "a"), (4, 0, "a")]
     )
     answer = tensor_based_rpq("(a | b | c)* a", graph, {0}, {0, 1, 2, 3, 4})
@@ -109,7 +99,7 @@ def test_tensor_based_rpq_concat_and_alt_and_star():
 
 
 def test_tensor_based_rpq_empty_start():
-    graph = _build_graph([(0, 1, "a"), (1, 2, "b"), (2, 0, "a")])
+    graph = build_graph([(0, 1, "a"), (1, 2, "b"), (2, 0, "a")])
 
     assert tensor_based_rpq("a b", graph, set(), {2}) == tensor_based_rpq(
         "a b", graph, set(graph.nodes), {2}
@@ -117,7 +107,7 @@ def test_tensor_based_rpq_empty_start():
 
 
 def test_tensor_based_rpq_empty_final():
-    graph = _build_graph([(0, 1, "a"), (1, 2, "b"), (2, 0, "a")])
+    graph = build_graph([(0, 1, "a"), (1, 2, "b"), (2, 0, "a")])
 
     assert tensor_based_rpq("a b", graph, {0}, set()) == tensor_based_rpq(
         "a b", graph, {0}, set(graph.nodes)
@@ -125,7 +115,7 @@ def test_tensor_based_rpq_empty_final():
 
 
 def test_tensor_based_rpq_empty_start_and_final():
-    graph = _build_graph([(0, 1, "a"), (1, 2, "b"), (2, 0, "a")])
+    graph = build_graph([(0, 1, "a"), (1, 2, "b"), (2, 0, "a")])
 
     assert tensor_based_rpq("a b", graph, set(), set()) == tensor_based_rpq(
         "a b", graph, set(graph.nodes), set(graph.nodes)
@@ -154,7 +144,7 @@ def test_intersect_automata_returns_adjacency_matrix_fa():
 
 
 def test_tensor_based_rpq_returns_set_of_int_pairs():
-    graph = _build_graph([(0, 1, "a"), (1, 2, "b"), (2, 3, "c")])
+    graph = build_graph([(0, 1, "a"), (1, 2, "b"), (2, 3, "c")])
     answer = tensor_based_rpq("a b c", graph, {0}, {3})
 
     assert type(answer) is set
@@ -182,7 +172,7 @@ def test_intersect_automata_raises_on_second_none_automaton():
 
 
 def test_tensor_based_rpq_raises_on_none_regex():
-    graph = _build_graph([(0, 1, "b")])
+    graph = build_graph([(0, 1, "b")])
 
     with pytest.raises(AttributeError):
         tensor_based_rpq(None, graph, {0}, {1})
@@ -194,7 +184,7 @@ def test_tensor_based_rpq_raises_on_none_graph():
 
 
 def test_tensor_based_rpq_raises_on_malformed_regex():
-    graph = _build_graph([(0, 1, "b")])
+    graph = build_graph([(0, 1, "b")])
 
     with pytest.raises(MisformedRegexError):
         tensor_based_rpq("(((", graph, {0}, {1})

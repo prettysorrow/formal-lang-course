@@ -1,17 +1,10 @@
 """Tests for task 6."""
 
-import networkx as nx
 import pytest
 from pyformlang.cfg import CFG, Terminal, Variable
 
+from helpers import build_graph
 from project.task6 import cfg_to_weak_normal_form, hellings_based_cfpq
-
-
-def _build_graph(edges) -> nx.MultiDiGraph:
-    graph = nx.MultiDiGraph()
-    for source, target, label in edges:
-        graph.add_edge(source, target, label=label)
-    return graph
 
 
 # positive tests
@@ -76,7 +69,7 @@ def test_hellings_based_cfpq_positive(
     grammar, edges, start_nodes, final_nodes, expected
 ):
     cfg = CFG.from_text(grammar)
-    graph = _build_graph(edges)
+    graph = build_graph(edges)
     result = hellings_based_cfpq(cfg, graph, start_nodes, final_nodes)
     assert result == expected
 
@@ -98,7 +91,7 @@ def test_cfg_to_weak_normal_form_negative(cfg, expected_error):
 
 
 _valid_cfg = CFG.from_text("S -> a")
-_valid_graph = _build_graph([(0, 1, "a")])
+_valid_graph = build_graph([(0, 1, "a")])
 
 
 @pytest.mark.parametrize(

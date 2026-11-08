@@ -15,13 +15,12 @@ def gll_based_cfpq(
     final_nodes: set[int] = None,
 ) -> set[tuple[int, int]]:
     graph_fa = graph_to_nfa(graph, start_nodes, final_nodes)
+    start_states = {state.value for state in graph_fa.start_states}
+    final_states = {state.value for state in graph_fa.final_states}
 
     transitions = defaultdict(lambda: defaultdict(list))
     for source, target, label in graph_fa.to_networkx().edges(data="label"):
         transitions[label][source].append(target)
-
-    start_states = {state.value for state in graph_fa.start_states}
-    final_states = {state.value for state in graph_fa.final_states}
 
     boxes = {}
     for label, box in rsm.boxes.items():
@@ -37,44 +36,44 @@ def gll_based_cfpq(
         )
 
     start_symbol = rsm.initial_label.value
-
-    gss_edges = defaultdict(lambda: defaultdict(set))
+    edges = defaultdict(lambda: defaultdict(set))
     popped = defaultdict(lambda: defaultdict(set))
-
     visited = set()
-    stack = []
+    descriptors = []
 
-    def add_descriptor(label, source, state, position):
-        descriptor = (label, source, state, position)
+    #   label    -- nonterminal whose box is being recognized
+    #   origin   -- graph node where the recognition of this box started
+    #   state    -- current state inside that box
+    #   position -- graph node the parse has currently reached
+    def add_descriptor(label, origin, state, position):
+        descriptor = (label, origin, state, position)
         if descriptor not in visited:
             visited.add(descriptor)
-            stack.append(descriptor)
+            descriptors.append(descriptor)
 
-    for start in start_states:
-        for state in boxes[start_symbol][0]:
-            add_descriptor(start_symbol, start, state, start)
+    for start_state in start_states:
+        for box_start_state in boxes[start_symbol][0]:
+            add_descriptor(start_symbol, start_state, box_start_state, start_state)
 
-    while stack:
-        label, source, state, position = stack.pop()
+    while descriptors:
+        label, origin, state, position = descriptors.pop()
         _, box_final_states, box_transitions = boxes[label]
 
         if state in box_final_states:
-            popped[label][source].add(position)
-            for return_state, parent_label, parent_source in gss_edges[label][source]:
-                add_descriptor(parent_label, parent_source, return_state, position)
+            popped[label][origin].add(position)
+            for return_state, parent_label, parent_origin in edges[label][origin]:
+                add_descriptor(parent_label, parent_origin, return_state, position)
 
         for symbol, target_state in box_transitions[state]:
-            if symbol == "epsilon":
-                add_descriptor(label, source, target_state, position)
-            elif symbol in boxes:
-                gss_edges[symbol][position].add((target_state, label, source))
+            if symbol in boxes:
+                edges[symbol][position].add((target_state, label, origin))
                 for end in popped[symbol][position]:
-                    add_descriptor(label, source, target_state, end)
+                    add_descriptor(label, origin, target_state, end)
                 for callee_state in boxes[symbol][0]:
                     add_descriptor(symbol, position, callee_state, position)
             else:
                 for target in transitions[symbol][position]:
-                    add_descriptor(label, source, target_state, target)
+                    add_descriptor(label, origin, target_state, target)
 
     return {
         (source, target)
